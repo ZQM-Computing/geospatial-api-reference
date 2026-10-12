@@ -113,6 +113,11 @@ Database-side patterns — indexing, spatial joins, tiling with `ST_AsMVT`, data
 
 Maintained by [ZQM Computing](https://github.com/ZQM-Computing). Built from production geospatial platform and REST API work by Alex Zelenski, GISP.
 
+## More from this series
+
+- [postgis-patterns](https://github.com/ZQM-Computing/postgis-patterns) — Production PostGIS patterns: spatial indexing, joins & KNN, SRID management, vector tiles, data quality, partitioning
+- [qgis-resources](https://github.com/ZQM-Computing/qgis-resources) — QGIS expressions, PyQGIS snippets, Processing scripts, styles, and QField field-collection guides
+
 ## License
 
 MIT — see [`LICENSE`](LICENSE).
