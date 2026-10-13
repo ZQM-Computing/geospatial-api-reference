@@ -1,5 +1,9 @@
 # geospatial-api-reference — OGC API – Features with FastAPI and PostGIS
 
+## Who this is for
+
+Backend developers and data engineers building OGC-compliant geospatial APIs.
+
 [![Validate](https://github.com/ZQM-Computing/geospatial-api-reference/actions/workflows/validate.yml/badge.svg)](https://github.com/ZQM-Computing/geospatial-api-reference/actions)
 
 A reference implementation of **OGC API – Features** (the modern successor to WFS) built with **FastAPI** and **PostgreSQL/PostGIS**: serve vector geospatial data as **GeoJSON** over REST — collections, items, `bbox` and `datetime` filtering, and pagination — with the architecture decisions documented, not just the code.
