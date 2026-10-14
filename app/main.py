@@ -16,13 +16,13 @@ Run locally (sample data, no database):
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 
 from app.config import Settings
-from app.repository import COLLECTIONS, make_repository, parse_datetime_range
+from app.repository import make_repository, parse_datetime_range
 
 CONFORMANCE = [
     "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
@@ -34,13 +34,15 @@ CONFORMANCE = [
 def _link(request: Request, rel: str, href: str, title: str) -> dict[str, str]:
     return {
         "rel": rel,
-        "type": "application/geo+json" if href.endswith("items") or "/items" in href else "application/json",
+        "type": "application/geo+json"
+        if href.endswith("items") or "/items" in href
+        else "application/json",
         "title": title,
         "href": str(request.base_url).rstrip("/") + href,
     }
 
 
-def create_app(settings: Optional[Settings] = None) -> FastAPI:
+def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings()
     app = FastAPI(
         title="Geospatial API Reference",
@@ -99,12 +101,17 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
             if coll["bbox"]:
                 item["extent"] = {"spatial": {"bbox": [coll["bbox"]]}}
             out.append(item)
-        return {"collections": out, "links": [_link(request, "self", "/collections", "Collections")]}
+        return {
+            "collections": out,
+            "links": [_link(request, "self", "/collections", "Collections")],
+        }
 
     def _require_collection(request: Request, collection_id: str) -> dict[str, Any]:
         coll = request.app.state.repo.get_collection(collection_id)
         if coll is None:
-            raise HTTPException(status_code=404, detail=f"Unknown collection: {collection_id}")
+            raise HTTPException(
+                status_code=404, detail=f"Unknown collection: {collection_id}"
+            )
         return coll
 
     @app.get("/collections/{collection_id}")
@@ -117,8 +124,15 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
             "itemType": "feature",
             "crs": ["http://www.opengis.net/def/crs/OGC/1.3/CRS84"],
             "links": [
-                _link(request, "self", f"/collections/{collection_id}", "This collection"),
-                _link(request, "items", f"/collections/{collection_id}/items", "Items as GeoJSON"),
+                _link(
+                    request, "self", f"/collections/{collection_id}", "This collection"
+                ),
+                _link(
+                    request,
+                    "items",
+                    f"/collections/{collection_id}/items",
+                    "Items as GeoJSON",
+                ),
             ],
         }
         if coll["bbox"]:
@@ -129,9 +143,9 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
     def items(
         request: Request,
         collection_id: str,
-        bbox: Optional[str] = None,
-        datetime: Optional[str] = None,
-        limit: Optional[int] = Query(default=None, ge=1),
+        bbox: str | None = None,
+        datetime: str | None = None,
+        limit: int | None = Query(default=None, ge=1),
         offset: int = Query(default=0, ge=0),
     ) -> dict[str, Any]:
         _require_collection(request, collection_id)
@@ -141,11 +155,15 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
         if bbox is not None:
             parts = bbox.split(",")
             if len(parts) != 4:
-                raise HTTPException(status_code=400, detail="bbox must be minx,miny,maxx,maxy")
+                raise HTTPException(
+                    status_code=400, detail="bbox must be minx,miny,maxx,maxy"
+                )
             try:
                 bbox_tuple = tuple(float(p) for p in parts)
             except ValueError:
-                raise HTTPException(status_code=400, detail="bbox values must be numbers")
+                raise HTTPException(
+                    status_code=400, detail="bbox values must be numbers"
+                )
 
         datetime_range = parse_datetime_range(datetime) if datetime else None
         page_limit = min(limit or settings.default_limit, settings.max_limit)
@@ -172,7 +190,9 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
         _require_collection(request, collection_id)
         feature = request.app.state.repo.get_item(collection_id, feature_id)
         if feature is None:
-            raise HTTPException(status_code=404, detail=f"Unknown feature: {feature_id}")
+            raise HTTPException(
+                status_code=404, detail=f"Unknown feature: {feature_id}"
+            )
         return JSONResponse(content=feature, media_type="application/geo+json")
 
     return app

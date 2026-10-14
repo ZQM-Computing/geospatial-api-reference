@@ -1,8 +1,7 @@
-#!/usr/bin/env python3
 """Example 02: Bounding box filtering with FastAPI."""
-from fastapi import FastAPI, HTTPException
-from typing import Optional
+
 import uvicorn
+from fastapi import FastAPI
 
 app = FastAPI(title="OGC API - Features with BBox", version="1.0.0")
 
@@ -12,21 +11,25 @@ FEATURES = [
     {"id": 3, "name": "Point C", "lon": -80.91, "lat": 29.01},
 ]
 
+
 @app.get("/collections/points/items")
-def get_items(bbox: Optional[str] = None, limit: int = 10):
+def get_items(bbox: str | None = None, limit: int = 10):
     items = []
     for f in FEATURES[:limit]:
         if bbox:
             minx, miny, maxx, maxy = [float(x) for x in bbox.split(",")]
             if not (minx <= f["lon"] <= maxx and miny <= f["lat"] <= maxy):
                 continue
-        items.append({
-            "type": "Feature",
-            "id": f["id"],
-            "geometry": {"type": "Point", "coordinates": [f["lon"], f["lat"]]},
-            "properties": {"name": f["name"]}
-        })
+        items.append(
+            {
+                "type": "Feature",
+                "id": f["id"],
+                "geometry": {"type": "Point", "coordinates": [f["lon"], f["lat"]]},
+                "properties": {"name": f["name"]},
+            }
+        )
     return {"type": "FeatureCollection", "features": items}
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

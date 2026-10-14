@@ -1,10 +1,9 @@
 """API tests against the sample backend -- no database required."""
 
 import pytest
-from fastapi.testclient import TestClient
-
 from app.config import Settings
 from app.main import create_app
+from fastapi.testclient import TestClient
 
 
 @pytest.fixture(scope="module")
@@ -96,7 +95,5 @@ def test_unknown_feature_404(client: TestClient) -> None:
 
 
 def test_invalid_bbox_400(client: TestClient) -> None:
-    response = client.get(
-        "/collections/parcels/items", params={"bbox": "1,2,3"}
-    )
+    response = client.get("/collections/parcels/items", params={"bbox": "1,2,3"})
     assert response.status_code == 400

@@ -17,7 +17,7 @@ from __future__ import annotations
 import json
 import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "sample_features.geojson"
 
@@ -44,7 +44,8 @@ COLLECTIONS: dict[str, dict[str, Any]] = {
 # Shared helpers
 # --------------------------------------------------------------------------
 
-def parse_datetime_range(value: str) -> tuple[Optional[str], Optional[str]]:
+
+def parse_datetime_range(value: str) -> tuple[str | None, str | None]:
     """Parse an OGC 'datetime' parameter: an instant, or 'start/end' where
     either end may be '..' (open). Returns (start, end) ISO strings."""
     if "/" not in value:
@@ -76,6 +77,7 @@ def _bbox_intersects(a: tuple[float, ...], b: tuple[float, ...]) -> bool:
 # --------------------------------------------------------------------------
 # Sample backend
 # --------------------------------------------------------------------------
+
 
 class SampleRepository:
     def __init__(self, data_file: Path = DATA_FILE) -> None:
@@ -116,7 +118,7 @@ class SampleRepository:
             )
         return out
 
-    def get_collection(self, collection_id: str) -> Optional[dict[str, Any]]:
+    def get_collection(self, collection_id: str) -> dict[str, Any] | None:
         for coll in self.list_collections():
             if coll["id"] == collection_id:
                 return coll
@@ -125,8 +127,8 @@ class SampleRepository:
     def query_items(
         self,
         collection_id: str,
-        bbox: Optional[tuple[float, float, float, float]] = None,
-        datetime_range: Optional[tuple[Optional[str], Optional[str]]] = None,
+        bbox: tuple[float, float, float, float] | None = None,
+        datetime_range: tuple[str | None, str | None] | None = None,
         limit: int = 50,
         offset: int = 0,
     ) -> tuple[list[dict[str, Any]], int]:
@@ -135,7 +137,9 @@ class SampleRepository:
 
         if bbox is not None:
             features = [
-                f for f in features if _bbox_intersects(_geometry_bbox(f["geometry"]), bbox)
+                f
+                for f in features
+                if _bbox_intersects(_geometry_bbox(f["geometry"]), bbox)
             ]
         if datetime_range is not None:
             start, end = datetime_range
@@ -148,18 +152,14 @@ class SampleRepository:
                     return False
                 if start is not None and value < start:
                     return False
-                if end is not None and value > end:
-                    return False
-                return True
+                return not (end is not None and value > end)
 
             features = [f for f in features if in_range(f)]
 
         total = len(features)
         return features[offset : offset + limit], total
 
-    def get_item(
-        self, collection_id: str, feature_id: str
-    ) -> Optional[dict[str, Any]]:
+    def get_item(self, collection_id: str, feature_id: str) -> dict[str, Any] | None:
         for feature in self._by_collection.get(collection_id, []):
             if feature["properties"]["id"] == feature_id:
                 return feature
@@ -169,6 +169,7 @@ class SampleRepository:
 # --------------------------------------------------------------------------
 # PostGIS backend
 # --------------------------------------------------------------------------
+
 
 class PostGISRepository:
     """Serves the registered collections from PostGIS tables.
@@ -187,12 +188,12 @@ class PostGISRepository:
             return self._conn
         import psycopg  # imported lazily: the sample backend needs no driver
 
-        last_error: Optional[Exception] = None
+        last_error: Exception | None = None
         for _ in range(15):
             try:
                 self._conn = psycopg.connect(self._database_url, autocommit=True)
                 return self._conn
-            except Exception as exc:  # database still starting
+            except psycopg.Error as exc:  # database still starting
                 last_error = exc
                 time.sleep(2)
         raise RuntimeError(f"Could not connect to PostGIS: {last_error}")
@@ -223,7 +224,7 @@ class PostGISRepository:
             )
         return out
 
-    def get_collection(self, collection_id: str) -> Optional[dict[str, Any]]:
+    def get_collection(self, collection_id: str) -> dict[str, Any] | None:
         for coll in self.list_collections():
             if coll["id"] == collection_id:
                 return coll
@@ -232,8 +233,8 @@ class PostGISRepository:
     def query_items(
         self,
         collection_id: str,
-        bbox: Optional[tuple[float, float, float, float]] = None,
-        datetime_range: Optional[tuple[Optional[str], Optional[str]]] = None,
+        bbox: tuple[float, float, float, float] | None = None,
+        datetime_range: tuple[str | None, str | None] | None = None,
         limit: int = 50,
         offset: int = 0,
     ) -> tuple[list[dict[str, Any]], int]:
@@ -287,9 +288,7 @@ class PostGISRepository:
         ]
         return features, total
 
-    def get_item(
-        self, collection_id: str, feature_id: str
-    ) -> Optional[dict[str, Any]]:
+    def get_item(self, collection_id: str, feature_id: str) -> dict[str, Any] | None:
         conn = self._connection()
         table = COLLECTIONS[collection_id]["table"]
         row = conn.execute(

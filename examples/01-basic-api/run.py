@@ -1,9 +1,7 @@
-#!/usr/bin/env python3
 """Example 01: Basic OGC API - Features with FastAPI."""
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import List, Optional
+
 import uvicorn
+from fastapi import FastAPI, HTTPException
 
 app = FastAPI(title="OGC API - Features", version="1.0.0")
 
@@ -14,21 +12,26 @@ FEATURES = [
     {"id": 3, "name": "Point C", "lon": -80.91, "lat": 29.01, "type": "point"},
 ]
 
+
 @app.get("/collections")
 def get_collections():
     return [{"id": "points", "title": "Sample Points", "links": []}]
 
+
 @app.get("/collections/points/items")
-def get_items(bbox: Optional[str] = None, limit: int = 10):
+def get_items(bbox: str | None = None, limit: int = 10):
     items = []
     for f in FEATURES[:limit]:
-        items.append({
-            "type": "Feature",
-            "id": f["id"],
-            "geometry": {"type": "Point", "coordinates": [f["lon"], f["lat"]]},
-            "properties": {"name": f["name"], "type": f["type"]}
-        })
+        items.append(
+            {
+                "type": "Feature",
+                "id": f["id"],
+                "geometry": {"type": "Point", "coordinates": [f["lon"], f["lat"]]},
+                "properties": {"name": f["name"], "type": f["type"]},
+            }
+        )
     return {"type": "FeatureCollection", "features": items}
+
 
 @app.get("/collections/points/items/{item_id}")
 def get_item(item_id: int):
@@ -38,9 +41,10 @@ def get_item(item_id: int):
                 "type": "Feature",
                 "id": f["id"],
                 "geometry": {"type": "Point", "coordinates": [f["lon"], f["lat"]]},
-                "properties": {"name": f["name"], "type": f["type"]}
+                "properties": {"name": f["name"], "type": f["type"]},
             }
     raise HTTPException(status_code=404, detail="Item not found")
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
