@@ -2,9 +2,9 @@
 
 <!-- ZQM-START -->
 <p align="center">
-  <strong>ZQM Labs — Z's Quests & Mischief</strong><br>
-  <a href="https://zqmlabs.com">zqmlabs.com</a> •
-  <a href="https://github.com/ZQM-Labs">GitHub</a>
+  <strong>ZQM Computing — Geospatial Engineering & Scientific Computing</strong><br>
+  <a href="https://github.com/ZQM-Computing">ZQM Computing</a> •
+  <a href="https://github.com/ZQM-Labs">ZQM Labs</a>
 </p>
 <!-- ZQM-END -->
 
@@ -144,6 +144,12 @@ Maintained by [ZQM Computing](https://github.com/ZQM-Computing). Built from prod
 - [proxmox-ceph-operations](https://github.com/ZQM-Computing/proxmox-ceph-operations) — Proxmox VE + Ceph operations runbooks: health checks, backup discipline, OSD replacement, upgrade checklists
 - [geospatial-patterns](https://github.com/ZQM-Computing/geospatial-patterns) — Umbrella index for all ZQM geospatial pattern repos
 
+## Documentation and validation
+
+For setup instructions, reproducible examples, data provenance, CRS/SRID assumptions, security guidance, and dependency labels, follow the [ZQM geospatial repository documentation standard](https://github.com/ZQM-Computing/geospatial-patterns/blob/main/docs/repository-documentation-standard.md).
+
+The configured CI workflow is the source of truth for automated checks. A passing workflow establishes only that its checks passed for that commit; it does not certify production deployment or prove that every dependency and operating environment was covered.
+
 ## License
 
 MIT — see [`LICENSE`](LICENSE).
@@ -160,7 +166,7 @@ MIT — see [`LICENSE`](LICENSE).
 - [geoparquet-patterns](https://github.com/ZQM-Computing/geoparquet-patterns) — GeoParquet patterns for columnar analytics
 - [h3-patterns](https://github.com/ZQM-Computing/h3-patterns) — H3 hexagonal grid patterns
 
-*Part of [ZQM Labs](https://github.com/ZQM-Labs) — games, gear & a little mischief.*
+*Part of [ZQM Computing](https://github.com/ZQM-Computing) — geospatial engineering, scientific computing, and infrastructure patterns.*
 
 
 <!-- ZQM-FOOTER-START -->
