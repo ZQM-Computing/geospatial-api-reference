@@ -1,16 +1,34 @@
-# Contributing
+# Contributing to ZQM Computing
 
-Thanks for helping improve this reference implementation.
+Thank you for your interest in contributing to ZQM Computing — geospatial patterns and tools.
 
-## Principles for contributions
+## How to Contribute
 
-1. **The repository interface is the contract.** New data sources belong behind `app/repository.py`'s contract, not in the routes.
-2. **Tests must keep running without a database.** Anything that needs PostGIS gets a sample-backend equivalent or a clearly separated integration test.
-3. **Follow the standard, or document the deviation.** If a response shape departs from OGC API – Features, the PR description and `docs/ogc-notes.md` should say why.
-4. **No real data.** Examples and fixtures stay synthetic — no real parcel, utility, customer, or sensitive location data.
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/your-feature`)
+3. Commit your changes (`git commit -m 'Add your feature'`)
+4. Push to the branch (`git push origin feature/your-feature`)
+5. Open a Pull Request
 
-## Workflow
+## Code Standards
 
-- Run `pytest` before opening a pull request.
-- Keep routes thin: validation and response shaping in `app/main.py`, data access in the repository.
-- New collections register in `COLLECTIONS` (repository) plus schema/fixtures as needed.
+- Follow existing code style
+- Add tests for new features
+- Update documentation as needed
+- Keep commits atomic and descriptive
+- All repos are MIT-licensed unless otherwise noted
+
+## Reporting Issues
+
+- Use GitHub Issues for bug reports
+- Include steps to reproduce
+- Specify your environment (OS, version, etc)
+- For security vulnerabilities, see [SECURITY.md](SECURITY.md)
+
+## Questions?
+
+Open an issue or discussion in the repository.
+
+---
+
+*Part of the [ZQM Computing](https://github.com/ZQM-Computing) ecosystem — geospatial patterns and tools.*
