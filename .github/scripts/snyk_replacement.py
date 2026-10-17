@@ -1,4 +1,4 @@
-# Vendored from private ZQM-Labs/zqm-supply-chain at source commit 68e97fad796c6dafab73c85380359f29d6f9dcb2.
+# Vendored from private ZQM-Labs/zqm-supply-chain at source commit d554a5934fc1cfbc1ace23ae6ad7808c20ad3da0.
 # Licensed under the MIT License; retain .github/scripts/SUPPLY_CHAIN_SCANNER_LICENSE.txt with this file.
 #!/usr/bin/env python3
 """
@@ -28,7 +28,7 @@ ECOSYSTEMS = {
     "javascript": ["package.json", "package-lock.json", "yarn.lock"],
     "go": ["go.mod", "go.sum"],
 }
-ALLOWED_LICENSES = {"MIT", "Apache-2.0", "BSD-3-Clause", "BSD-2-Clause", "ISC", "Python-2.0", "Apache Software License", "0BSD", "MIT License", "Python Software Foundation License"}
+ALLOWED_LICENSES = {"MIT", "Apache-2.0", "BSD-3-Clause", "BSD-2-Clause", "ISC", "Python-2.0", "Apache Software License", "0BSD", "MIT License", "Python Software Foundation License", "BSD License"}
 OSV_API = "https://api.osv.dev/v1/query"
 GITHUB_API = "https://api.github.com"
 MAX_RETRIES = 3
