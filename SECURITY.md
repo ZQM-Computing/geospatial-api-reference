@@ -1,15 +1,31 @@
-# Security policy
+# Security Policy
 
-## Supported version
+Report vulnerabilities to zqmcomputing@gmail.com.
 
-Security fixes are applied to the `main` branch. This repository is a reference implementation, not a hosted service.
+## Scope
 
-## Reporting a vulnerability
+- All ZQM Computing public repositories
+- ZQM Labs infrastructure and tooling
 
-Email **zqmcomputing@gmail.com** with the subject `geospatial-api-reference security` if you find a vulnerability in the service code or workflow configuration. Please do not open a public issue for a sensitive report.
+## Reporting
 
-Include the affected file or endpoint, the impact you observed, and reproduction steps when available.
+- **Email**: zqmcomputing@gmail.com
+- **GitHub Security Advisory**: Use the "Security" tab on GitHub
+- Please do NOT open public issues for security vulnerabilities
 
-## Deployment note
+## What to Expect
 
-The defaults in this repository are for local demonstration: the sample backend needs no credentials, and the Docker Compose database is a disposable demo instance. Do not expose a deployment built from these defaults to a network you do not control without adding authentication in front of the API, real database credentials, and TLS — the code intentionally ships without an auth layer so the OGC surface stays readable, which makes the deployment boundary your responsibility.
+- Acknowledgment within 48 hours
+- Assessment and severity classification within 5 business days
+- Coordinated disclosure timeline agreed upon with reporter
+
+## Supported Versions
+
+| Version | Supported |
+|---------|-----------|
+| latest  | Yes        |
+| < latest| No         |
+
+---
+
+*Part of the [ZQM Computing](https://github.com/ZQM-Computing) ecosystem.*
