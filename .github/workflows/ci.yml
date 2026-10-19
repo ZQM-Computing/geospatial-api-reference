@@ -1,18 +1,93 @@
-name: ci
+name: CI
+
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
+
+permissions:
+  contents: read
+
 jobs:
-  validate:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      python: ${{ steps.detect.outputs.python }}
+      node: ${{ steps.detect.outputs.node }}
+      go: ${{ steps.detect.outputs.go }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: detect
+        shell: bash
+        run: |
+          if [ -f pyproject.toml ] || [ -f pytest.ini ] || [ -f requirements.txt ] || [ -d tests ]; then echo "python=true" >> "$GITHUB_OUTPUT"; else echo "python=false" >> "$GITHUB_OUTPUT"; fi
+          if [ -f package.json ]; then echo "node=true" >> "$GITHUB_OUTPUT"; else echo "node=false" >> "$GITHUB_OUTPUT"; fi
+          if [ -f go.mod ]; then echo "go=true" >> "$GITHUB_OUTPUT"; else echo "go=false" >> "$GITHUB_OUTPUT"; fi
+
+  python:
+    needs: detect
+    if: needs.detect.outputs.python == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - run: echo 'No tests configured yet.'
-  ci:
-    name: ci
-    needs: [validate]
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install project dependencies
+        shell: bash
+        run: |
+          python -m pip install --disable-pip-version-check --upgrade pip
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+          if [ -f setup.py ] || [ -f setup.cfg ] || [ -d src ]; then python -m pip install -e .; fi
+          python -m pip install pytest
+      - name: Run tests when present
+        shell: bash
+        run: |
+          if find . -path './.git' -prune -o -type f \( -name 'test_*.py' -o -name '*_test.py' \) -print -quit | grep -q .; then
+            python -m pytest -q
+          else
+            echo "No pytest-discoverable test files; dependency installation completed."
+          fi
+
+  node:
+    needs: detect
+    if: needs.detect.outputs.node == 'true'
     runs-on: ubuntu-latest
     steps:
-      - run: echo "validation passed"
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install dependencies and run tests when configured
+        shell: bash
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          if node -e "process.exit(require('./package.json').scripts?.test ? 0 : 1)"; then
+            npm test
+          else
+            echo "No npm test script configured; dependency installation completed."
+          fi
+
+  go:
+    needs: detect
+    if: needs.detect.outputs.go == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache: true
+      - name: Run Go tests
+        run: go test ./...
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check repository documentation
+        run: python scripts/check_docs.py
