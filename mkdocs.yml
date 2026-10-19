@@ -1,0 +1,21 @@
+site_name: Geospatial API Reference
+site_description: OGC API - Features reference implementation
+site_author: ZQM Computing
+repo_url: https://github.com/ZQM-Computing/geospatial-api-reference
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - search.suggest
+    - search.highlight
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
