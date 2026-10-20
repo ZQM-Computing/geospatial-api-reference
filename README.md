@@ -50,6 +50,13 @@ docker compose up --build
 
 Compose starts PostGIS, loads `sql/schema.sql` (the same synthetic data as the sample file), and starts the API in PostGIS mode on <http://localhost:8000>.
 
+## Usage
+
+Start the API (see [Quick start](#quick-start)), then call the endpoints
+listed under [Endpoints](#endpoints) with any HTTP client. The running
+server also serves interactive OpenAPI documentation at `/docs`, which is
+the fastest way to explore the available operations.
+
 ## Endpoints
 
 | Endpoint | Description |
