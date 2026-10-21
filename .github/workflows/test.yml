@@ -1,17 +1,14 @@
 name: Tests
-
 on:
   push:
     branches: [main, master]
   pull_request:
     branches: [main, master]
-
 permissions:
   contents: read
-
 jobs:
   test:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
