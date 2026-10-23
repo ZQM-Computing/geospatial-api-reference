@@ -16,7 +16,7 @@ This service implements the essentials of **OGC API – Features Part 1: Core** 
 
 - **Transactions (create/update/delete)** — Part 4 of the standard; add as a separate router with authentication in front, never bolt writes onto the read path.
 - **CQL2 filtering** — Part 3; the natural extension once basic `bbox`/`datetime` no longer suffice. Parse CQL2 into parameterized SQL — never string-concatenate user input into a query.
-- **Vector tiles** — a different standard (OGC API – Tiles); in this architecture, serve tiles from the same PostGIS store with `ST_AsMVT` (see [postgis-patterns](https://github.com/ZQM-Computing/postgis-patterns)) behind a cache.
+- **Vector tiles** — a different standard (OGC API – Tiles); in this architecture, serve tiles from the same PostGIS store with `ST_AsMVT` (see [postgis-cookbook](https://github.com/ZQM-Computing/postgis-cookbook)) behind a cache.
 - **HTML responses** — content negotiation to an HTML map view is pleasant for demos; JSON-first keeps the reference honest.
 
 ## Production checklist
