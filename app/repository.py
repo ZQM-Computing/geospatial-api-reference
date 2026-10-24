@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import time
+from datetime import datetime as DateTime
 from pathlib import Path
 from typing import Any
 
@@ -48,10 +49,39 @@ COLLECTIONS: dict[str, dict[str, Any]] = {
 def parse_datetime_range(value: str) -> tuple[str | None, str | None]:
     """Parse an OGC 'datetime' parameter: an instant, or 'start/end' where
     either end may be '..' (open). Returns (start, end) ISO strings."""
-    if "/" not in value:
-        return value, value
-    start, end = value.split("/", 1)
-    return (None if start == ".." else start), (None if end == ".." else end)
+    if not value or value.count("/") > 1:
+        raise ValueError("datetime must be an instant or one start/end interval")
+
+    if "/" in value:
+        start, end = value.split("/", 1)
+        if not start and not end:
+            raise ValueError("datetime interval cannot have two empty endpoints")
+        start = None if start == ".." else start
+        end = None if end == ".." else end
+    else:
+        start = end = value
+
+    def validate_endpoint(endpoint: str | None) -> DateTime | None:
+        if endpoint is None:
+            return None
+        try:
+            # datetime.fromisoformat accepts offsets and fractional seconds.
+            # Replace the RFC 3339 UTC marker for Python versions that need it.
+            parsed = DateTime.fromisoformat(endpoint.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise ValueError(f"invalid ISO-8601 datetime: {endpoint}") from exc
+        return parsed
+
+    start_dt = validate_endpoint(start)
+    end_dt = validate_endpoint(end)
+    if start_dt is not None and end_dt is not None:
+        # Avoid comparing a naive timestamp with an offset-aware timestamp.
+        if (start_dt.tzinfo is None) != (end_dt.tzinfo is None):
+            raise ValueError("datetime interval endpoints must use compatible timezone notation")
+        if start_dt > end_dt:
+            raise ValueError("datetime interval start must not exceed its end")
+
+    return start, end
 
 
 def _geometry_bbox(geometry: dict[str, Any]) -> tuple[float, float, float, float]:
