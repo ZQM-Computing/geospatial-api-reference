@@ -178,9 +178,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 raise HTTPException(
                     status_code=400, detail="bbox latitude must be between -90 and 90"
                 )
-            if minx > maxx or miny > maxy:
+            if miny > maxy:
                 raise HTTPException(
-                    status_code=400, detail="bbox minimums must not exceed maximums"
+                    status_code=400, detail="bbox minimum latitude must not exceed maximum latitude"
                 )
             bbox_tuple = values
 
