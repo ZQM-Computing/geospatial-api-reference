@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import json
 import time
-from datetime import datetime as DateTime
+from datetime import datetime as DateTime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -65,12 +65,15 @@ def parse_datetime_range(value: str) -> tuple[str | None, str | None]:
         if endpoint is None:
             return None
         try:
-            # datetime.fromisoformat accepts offsets and fractional seconds.
-            # Replace the RFC 3339 UTC marker for Python versions that need it.
+            # RFC 3339 instants must identify their timezone. Canonicalizing to
+            # UTC avoids lexicographic mis-ordering for equivalent instants
+            # written with different offsets.
             parsed = DateTime.fromisoformat(endpoint.replace("Z", "+00:00"))
         except ValueError as exc:
-            raise ValueError(f"invalid ISO-8601 datetime: {endpoint}") from exc
-        return parsed
+            raise ValueError(f"invalid RFC 3339 datetime: {endpoint}") from exc
+        if parsed.tzinfo is None or parsed.utcoffset() is None:
+            raise ValueError("datetime endpoints must include a timezone")
+        return parsed.astimezone(timezone.utc)
 
     start_dt = validate_endpoint(start)
     end_dt = validate_endpoint(end)
@@ -81,7 +84,14 @@ def parse_datetime_range(value: str) -> tuple[str | None, str | None]:
         if start_dt > end_dt:
             raise ValueError("datetime interval start must not exceed its end")
 
-    return start, end
+    def canonical(endpoint: str | None) -> str | None:
+        if endpoint is None:
+            return None
+        parsed = validate_endpoint(endpoint)
+        assert parsed is not None
+        return parsed.isoformat().replace("+00:00", "Z")
+
+    return canonical(start), canonical(end)
 
 
 def _geometry_bbox(geometry: dict[str, Any]) -> tuple[float, float, float, float]:
@@ -180,9 +190,18 @@ class SampleRepository:
                 value = f["properties"].get(dt_prop)
                 if value is None:
                     return False
-                if start is not None and value < start:
+                try:
+                    feature_dt = DateTime.fromisoformat(value.replace("Z", "+00:00"))
+                except (AttributeError, TypeError, ValueError):
                     return False
-                return not (end is not None and value > end)
+                if feature_dt.tzinfo is None or feature_dt.utcoffset() is None:
+                    return False
+                feature_dt = feature_dt.astimezone(timezone.utc)
+                start_dt = DateTime.fromisoformat(start.replace("Z", "+00:00")) if start else None
+                end_dt = DateTime.fromisoformat(end.replace("Z", "+00:00")) if end else None
+                if start_dt is not None and feature_dt < start_dt:
+                    return False
+                return not (end_dt is not None and feature_dt > end_dt)
 
             features = [f for f in features if in_range(f)]
 
@@ -283,10 +302,10 @@ class PostGISRepository:
         if datetime_range is not None and dt_prop is not None:
             start, end = datetime_range
             if start is not None:
-                where.append(f"(to_jsonb(t) ->> '{dt_prop}') >= %s")
+                where.append(f"((to_jsonb(t) ->> '{dt_prop}')::timestamptz) >= %s::timestamptz")
                 params.append(start)
             if end is not None:
-                where.append(f"(to_jsonb(t) ->> '{dt_prop}') <= %s")
+                where.append(f"((to_jsonb(t) ->> '{dt_prop}')::timestamptz) <= %s::timestamptz")
                 params.append(end)
         where_sql = f"WHERE {' AND '.join(where)}" if where else ""
 
