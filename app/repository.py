@@ -56,8 +56,8 @@ def parse_datetime_range(value: str) -> tuple[str | None, str | None]:
         start, end = value.split("/", 1)
         if not start and not end:
             raise ValueError("datetime interval cannot have two empty endpoints")
-        start = None if start == ".." else start
-        end = None if end == ".." else end
+        start = None if start in ("", "..") else start
+        end = None if end in ("", "..") else end
     else:
         start = end = value
 
