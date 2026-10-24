@@ -100,6 +100,17 @@ def test_invalid_bbox_400(client: TestClient) -> None:
     assert response.status_code == 400
 
 
+def test_antimeridian_bbox_is_valid(client: TestClient) -> None:
+    # OGC API - Features permits west longitude > east longitude when a bbox
+    # crosses the antimeridian (e.g. New Zealand's longitudes).
+    response = client.get(
+        "/collections/service-sites/items",
+        params={"bbox": "160.6,-55.95,-170,-25.89"},
+    )
+    assert response.status_code == 200
+    assert response.json()["numberMatched"] == 0
+
+
 @pytest.mark.parametrize(
     "bbox",
     [
