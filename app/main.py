@@ -16,6 +16,7 @@ Run locally (sample data, no database):
 
 from __future__ import annotations
 
+from math import isfinite
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query, Request
@@ -159,13 +160,37 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     status_code=400, detail="bbox must be minx,miny,maxx,maxy"
                 )
             try:
-                bbox_tuple = tuple(float(p) for p in parts)
-            except ValueError:
+                values = tuple(float(p) for p in parts)
+            except ValueError as exc:
                 raise HTTPException(
                     status_code=400, detail="bbox values must be numbers"
+                ) from exc
+            if not all(isfinite(value) for value in values):
+                raise HTTPException(
+                    status_code=400, detail="bbox values must be finite numbers"
                 )
+            minx, miny, maxx, maxy = values
+            if not (-180 <= minx <= 180 and -180 <= maxx <= 180):
+                raise HTTPException(
+                    status_code=400, detail="bbox longitude must be between -180 and 180"
+                )
+            if not (-90 <= miny <= 90 and -90 <= maxy <= 90):
+                raise HTTPException(
+                    status_code=400, detail="bbox latitude must be between -90 and 90"
+                )
+            if minx > maxx or miny > maxy:
+                raise HTTPException(
+                    status_code=400, detail="bbox minimums must not exceed maximums"
+                )
+            bbox_tuple = values
 
-        datetime_range = parse_datetime_range(datetime) if datetime else None
+        try:
+            datetime_range = parse_datetime_range(datetime) if datetime else None
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=400,
+                detail="datetime must be an ISO-8601 instant or start/end interval; use '..' for an open interval",
+            ) from exc
         page_limit = min(limit or settings.default_limit, settings.max_limit)
 
         features, total = request.app.state.repo.query_items(
