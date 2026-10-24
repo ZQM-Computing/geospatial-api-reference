@@ -98,3 +98,73 @@ def test_unknown_feature_404(client: TestClient) -> None:
 def test_invalid_bbox_400(client: TestClient) -> None:
     response = client.get("/collections/parcels/items", params={"bbox": "1,2,3"})
     assert response.status_code == 400
+
+
+def test_antimeridian_bbox_is_valid(client: TestClient) -> None:
+    # OGC API - Features permits west longitude > east longitude when a bbox
+    # crosses the antimeridian (e.g. New Zealand's longitudes).
+    response = client.get(
+        "/collections/service-sites/items",
+        params={"bbox": "160.6,-55.95,-170,-25.89"},
+    )
+    assert response.status_code == 200
+    assert response.json()["numberMatched"] == 0
+
+
+@pytest.mark.parametrize(
+    "bbox",
+    [
+        "NaN,29,-80,30",
+        "inf,29,80,30",
+        "-181,29,-80,30",
+        "-81,91,-80,30",
+        "-80,29,-81,30",
+        "-81,31,-80,30",
+        "-81,29,-80",
+        "west,29,-80,30",
+    ],
+)
+def test_invalid_bbox_values_return_400(client: TestClient, bbox: str) -> None:
+    response = client.get("/collections/parcels/items", params={"bbox": bbox})
+    assert response.status_code == 400
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "not-a-date",
+        "2026-02-30T00:00:00Z",
+        "2026-03-01T00:00:00Z/2026-02-01T00:00:00Z",
+        "2026-01-01T00:00:00Z/2026-02-01T00:00:00Z/2026-03-01T00:00:00Z",
+        "/",
+    ],
+)
+def test_invalid_datetime_returns_400(client: TestClient, value: str) -> None:
+    response = client.get(
+        "/collections/service-sites/items", params={"datetime": value}
+    )
+    assert response.status_code == 400
+
+
+def test_open_datetime_interval_is_supported(client: TestClient) -> None:
+    response = client.get(
+        "/collections/service-sites/items",
+        params={"datetime": "../2026-02-28T23:59:59Z"},
+    )
+    assert response.status_code == 200
+
+def test_datetime_offsets_compare_as_instants(client: TestClient) -> None:
+    response = client.get(
+        "/collections/service-sites/items",
+        params={"datetime": "2026-01-15T13:00:00+01:00/2026-01-20T13:00:00+01:00"},
+    )
+    assert response.status_code == 200
+    assert {feature["id"] for feature in response.json()["features"]} == {"site-1", "site-2"}
+
+
+def test_datetime_requires_timezone(client: TestClient) -> None:
+    response = client.get(
+        "/collections/service-sites/items",
+        params={"datetime": "2026-01-15T12:00:00/2026-01-20T12:00:00"},
+    )
+    assert response.status_code == 400

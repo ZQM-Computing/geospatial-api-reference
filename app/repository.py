@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import time
+from datetime import datetime as DateTime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -48,10 +49,49 @@ COLLECTIONS: dict[str, dict[str, Any]] = {
 def parse_datetime_range(value: str) -> tuple[str | None, str | None]:
     """Parse an OGC 'datetime' parameter: an instant, or 'start/end' where
     either end may be '..' (open). Returns (start, end) ISO strings."""
-    if "/" not in value:
-        return value, value
-    start, end = value.split("/", 1)
-    return (None if start == ".." else start), (None if end == ".." else end)
+    if not value or value.count("/") > 1:
+        raise ValueError("datetime must be an instant or one start/end interval")
+
+    if "/" in value:
+        start, end = value.split("/", 1)
+        if not start and not end:
+            raise ValueError("datetime interval cannot have two empty endpoints")
+        start = None if start in ("", "..") else start
+        end = None if end in ("", "..") else end
+    else:
+        start = end = value
+
+    def validate_endpoint(endpoint: str | None) -> DateTime | None:
+        if endpoint is None:
+            return None
+        try:
+            # RFC 3339 instants must identify their timezone. Canonicalizing to
+            # UTC avoids lexicographic mis-ordering for equivalent instants
+            # written with different offsets.
+            parsed = DateTime.fromisoformat(endpoint.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise ValueError(f"invalid RFC 3339 datetime: {endpoint}") from exc
+        if parsed.tzinfo is None or parsed.utcoffset() is None:
+            raise ValueError("datetime endpoints must include a timezone")
+        return parsed.astimezone(timezone.utc)
+
+    start_dt = validate_endpoint(start)
+    end_dt = validate_endpoint(end)
+    if start_dt is not None and end_dt is not None:
+        # Avoid comparing a naive timestamp with an offset-aware timestamp.
+        if (start_dt.tzinfo is None) != (end_dt.tzinfo is None):
+            raise ValueError("datetime interval endpoints must use compatible timezone notation")
+        if start_dt > end_dt:
+            raise ValueError("datetime interval start must not exceed its end")
+
+    def canonical(endpoint: str | None) -> str | None:
+        if endpoint is None:
+            return None
+        parsed = validate_endpoint(endpoint)
+        assert parsed is not None
+        return parsed.isoformat().replace("+00:00", "Z")
+
+    return canonical(start), canonical(end)
 
 
 def _geometry_bbox(geometry: dict[str, Any]) -> tuple[float, float, float, float]:
@@ -71,7 +111,14 @@ def _geometry_bbox(geometry: dict[str, Any]) -> tuple[float, float, float, float
 
 
 def _bbox_intersects(a: tuple[float, ...], b: tuple[float, ...]) -> bool:
-    return not (a[2] < b[0] or a[0] > b[2] or a[3] < b[1] or a[1] > b[3])
+    # OGC API - Features allows a CRS84 bbox to cross the antimeridian
+    # (west longitude > east longitude). A feature intersects either side
+    # of that wrapped bbox when its longitude range overlaps either segment.
+    if a[3] < b[1] or a[1] > b[3]:
+        return False
+    if b[0] > b[2]:
+        return a[2] >= b[0] or a[0] <= b[2]
+    return not (a[2] < b[0] or a[0] > b[2])
 
 
 # --------------------------------------------------------------------------
@@ -150,9 +197,18 @@ class SampleRepository:
                 value = f["properties"].get(dt_prop)
                 if value is None:
                     return False
-                if start is not None and value < start:
+                try:
+                    feature_dt = DateTime.fromisoformat(value.replace("Z", "+00:00"))
+                except (AttributeError, TypeError, ValueError):
                     return False
-                return not (end is not None and value > end)
+                if feature_dt.tzinfo is None or feature_dt.utcoffset() is None:
+                    return False
+                feature_dt = feature_dt.astimezone(timezone.utc)
+                start_dt = DateTime.fromisoformat(start.replace("Z", "+00:00")) if start else None
+                end_dt = DateTime.fromisoformat(end.replace("Z", "+00:00")) if end else None
+                if start_dt is not None and feature_dt < start_dt:
+                    return False
+                return not (end_dt is not None and feature_dt > end_dt)
 
             features = [f for f in features if in_range(f)]
 
@@ -244,19 +300,34 @@ class PostGISRepository:
         params: list[Any] = []
 
         if bbox is not None:
-            where.append(
-                "geom && ST_MakeEnvelope(%s, %s, %s, %s, 4326) "
-                "AND ST_Intersects(geom, ST_MakeEnvelope(%s, %s, %s, %s, 4326))"
-            )
-            params.extend([*bbox, *bbox])
+            minx, miny, maxx, maxy = bbox
+            if minx > maxx:
+                # A CRS84 bbox crossing the antimeridian is the union of the
+                # western and eastern edge envelopes, not an inverted box.
+                where.append(
+                    "((geom && ST_MakeEnvelope(%s, %s, 180, %s, 4326) "
+                    "AND ST_Intersects(geom, ST_MakeEnvelope(%s, %s, 180, %s, 4326))) "
+                    "OR (geom && ST_MakeEnvelope(-180, %s, %s, %s, 4326) "
+                    "AND ST_Intersects(geom, ST_MakeEnvelope(-180, %s, %s, %s, 4326))))"
+                )
+                params.extend([
+                    minx, miny, maxy, minx, miny, maxy,
+                    miny, maxx, maxy, miny, maxx, maxy,
+                ])
+            else:
+                where.append(
+                    "geom && ST_MakeEnvelope(%s, %s, %s, %s, 4326) "
+                    "AND ST_Intersects(geom, ST_MakeEnvelope(%s, %s, %s, %s, 4326))"
+                )
+                params.extend([*bbox, *bbox])
         dt_prop = COLLECTIONS[collection_id]["datetime_property"]
         if datetime_range is not None and dt_prop is not None:
             start, end = datetime_range
             if start is not None:
-                where.append(f"(to_jsonb(t) ->> '{dt_prop}') >= %s")
+                where.append(f"((to_jsonb(t) ->> '{dt_prop}')::timestamptz) >= %s::timestamptz")
                 params.append(start)
             if end is not None:
-                where.append(f"(to_jsonb(t) ->> '{dt_prop}') <= %s")
+                where.append(f"((to_jsonb(t) ->> '{dt_prop}')::timestamptz) <= %s::timestamptz")
                 params.append(end)
         where_sql = f"WHERE {' AND '.join(where)}" if where else ""
 
