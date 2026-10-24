@@ -141,3 +141,19 @@ def test_open_datetime_interval_is_supported(client: TestClient) -> None:
         params={"datetime": "../2026-02-28T23:59:59Z"},
     )
     assert response.status_code == 200
+
+def test_datetime_offsets_compare_as_instants(client: TestClient) -> None:
+    response = client.get(
+        "/collections/service-sites/items",
+        params={"datetime": "2026-01-15T13:00:00+01:00/2026-01-20T13:00:00+01:00"},
+    )
+    assert response.status_code == 200
+    assert {feature["id"] for feature in response.json()["features"]} == {"site-1", "site-2"}
+
+
+def test_datetime_requires_timezone(client: TestClient) -> None:
+    response = client.get(
+        "/collections/service-sites/items",
+        params={"datetime": "2026-01-15T12:00:00/2026-01-20T12:00:00"},
+    )
+    assert response.status_code == 400
