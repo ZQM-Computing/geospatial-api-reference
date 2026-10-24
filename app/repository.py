@@ -111,7 +111,14 @@ def _geometry_bbox(geometry: dict[str, Any]) -> tuple[float, float, float, float
 
 
 def _bbox_intersects(a: tuple[float, ...], b: tuple[float, ...]) -> bool:
-    return not (a[2] < b[0] or a[0] > b[2] or a[3] < b[1] or a[1] > b[3])
+    # OGC API - Features allows a CRS84 bbox to cross the antimeridian
+    # (west longitude > east longitude). A feature intersects either side
+    # of that wrapped bbox when its longitude range overlaps either segment.
+    if a[3] < b[1] or a[1] > b[3]:
+        return False
+    if b[0] > b[2]:
+        return a[2] >= b[0] or a[0] <= b[2]
+    return not (a[2] < b[0] or a[0] > b[2])
 
 
 # --------------------------------------------------------------------------
@@ -293,11 +300,26 @@ class PostGISRepository:
         params: list[Any] = []
 
         if bbox is not None:
-            where.append(
-                "geom && ST_MakeEnvelope(%s, %s, %s, %s, 4326) "
-                "AND ST_Intersects(geom, ST_MakeEnvelope(%s, %s, %s, %s, 4326))"
-            )
-            params.extend([*bbox, *bbox])
+            minx, miny, maxx, maxy = bbox
+            if minx > maxx:
+                # A CRS84 bbox crossing the antimeridian is the union of the
+                # western and eastern edge envelopes, not an inverted box.
+                where.append(
+                    "((geom && ST_MakeEnvelope(%s, %s, 180, %s, 4326) "
+                    "AND ST_Intersects(geom, ST_MakeEnvelope(%s, %s, 180, %s, 4326))) "
+                    "OR (geom && ST_MakeEnvelope(-180, %s, %s, %s, 4326) "
+                    "AND ST_Intersects(geom, ST_MakeEnvelope(-180, %s, %s, %s, 4326))))"
+                )
+                params.extend([
+                    minx, miny, maxy, minx, miny, maxy,
+                    miny, maxx, maxy, miny, maxx, maxy,
+                ])
+            else:
+                where.append(
+                    "geom && ST_MakeEnvelope(%s, %s, %s, %s, 4326) "
+                    "AND ST_Intersects(geom, ST_MakeEnvelope(%s, %s, %s, %s, 4326))"
+                )
+                params.extend([*bbox, *bbox])
         dt_prop = COLLECTIONS[collection_id]["datetime_property"]
         if datetime_range is not None and dt_prop is not None:
             start, end = datetime_range
