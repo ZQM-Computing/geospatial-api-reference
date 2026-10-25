@@ -127,7 +127,7 @@ def test_antimeridian_bbox_intersection_checks_both_edges() -> None:
         "inf,29,80,30",
         "-181,29,-80,30",
         "-81,91,-80,30",
-                "-81,31,-80,30",
+        "-81,31,-80,30",
         "-81,29,-80",
         "west,29,-80,30",
     ],
@@ -144,7 +144,11 @@ def test_invalid_bbox_values_return_400(client: TestClient, bbox: str) -> None:
         "2026-02-30T00:00:00Z",
         "2026-03-01T00:00:00Z/2026-02-01T00:00:00Z",
         "2026-01-01T00:00:00Z/2026-02-01T00:00:00Z/2026-03-01T00:00:00Z",
+        "",
         "/",
+        "/2026-02-01T00:00:00Z",
+        "2026-02-01T00:00:00Z/",
+        "../",
     ],
 )
 def test_invalid_datetime_returns_400(client: TestClient, value: str) -> None:

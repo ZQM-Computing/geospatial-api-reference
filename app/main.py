@@ -185,7 +185,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             bbox_tuple = values
 
         try:
-            datetime_range = parse_datetime_range(datetime) if datetime else None
+            datetime_range = parse_datetime_range(datetime) if datetime is not None else None
         except ValueError as exc:
             raise HTTPException(
                 status_code=400,
