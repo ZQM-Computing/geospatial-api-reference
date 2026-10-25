@@ -1,6 +1,7 @@
+# geospatial-api-reference — OGC API – Features with FastAPI and PostGIS
+
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![GitHub](https://img.shields.io/github/stars/ZQM-Computing/geospatial-api-reference?style=social)
-# geospatial-api-reference — OGC API – Features with FastAPI and PostGIS
 
 <!-- ZQM-START -->
 <!-- markdownlint-disable MD033 -->
