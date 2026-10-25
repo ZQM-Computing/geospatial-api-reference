@@ -19,9 +19,9 @@
 
 **What this repository is:** A reference implementation of OGC API – Features (the modern successor to WFS) built with FastAPI and PostgreSQL/PostGIS, serving GeoJSON over REST. It runs in a zero-infrastructure sample mode against a bundled synthetic dataset, or against live PostGIS tables.
 
-**What it contributes:** Part of the ZQM Computing public geospatial portfolio — production-grade pattern and reference repositories that document geospatial engineering practice across the stack. This repository is the reusable pattern library for its layer: working code and runbooks that practitioners can lift into their own pipelines, and portfolio evidence of the engineering practice behind ZQM Computing. The umbrella index for the series is [geospatial-cookbooks](https://github.com/ZQM-Computing/geospatial-cookbooks).
+**What it contributes:** Part of the ZQM Computing public geospatial portfolio. This repository is a reference implementation intended to demonstrate OGC API – Features concepts with sample and PostGIS-backed modes; evaluate its conformance and operational suitability against your own requirements before production use. The umbrella index for the series is [geospatial-cookbooks](https://github.com/ZQM-Computing/geospatial-cookbooks).
 
-**Standing:** The portfolio program was completed and Tier-1 hardened on 2026-10-15, with prose CI enforced as required status checks. This repository is standalone — no other repository or deployment depends on it.
+**Validation scope:** The automated suite exercises the documented routes and filtering behavior against the sample backend. It does not, by itself, establish full OGC conformance, production readiness, deployment status, or behavior under every PostGIS schema and operational environment.
 
 ## Who this is for
 
