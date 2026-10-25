@@ -111,6 +111,15 @@ def test_antimeridian_bbox_is_valid(client: TestClient) -> None:
     assert response.json()["numberMatched"] == 0
 
 
+def test_antimeridian_bbox_intersection_checks_both_edges() -> None:
+    from app.repository import _bbox_intersects
+
+    wrapped_bbox = (160.0, -20.0, -170.0, 20.0)
+    assert _bbox_intersects((170.0, -10.0, 175.0, 10.0), wrapped_bbox)
+    assert _bbox_intersects((-175.0, -10.0, -172.0, 10.0), wrapped_bbox)
+    assert not _bbox_intersects((-10.0, -10.0, 10.0, 10.0), wrapped_bbox)
+
+
 @pytest.mark.parametrize(
     "bbox",
     [
@@ -118,8 +127,7 @@ def test_antimeridian_bbox_is_valid(client: TestClient) -> None:
         "inf,29,80,30",
         "-181,29,-80,30",
         "-81,91,-80,30",
-        "-80,29,-81,30",
-        "-81,31,-80,30",
+                "-81,31,-80,30",
         "-81,29,-80",
         "west,29,-80,30",
     ],
@@ -152,6 +160,7 @@ def test_open_datetime_interval_is_supported(client: TestClient) -> None:
         params={"datetime": "../2026-02-28T23:59:59Z"},
     )
     assert response.status_code == 200
+
 
 def test_datetime_offsets_compare_as_instants(client: TestClient) -> None:
     response = client.get(
