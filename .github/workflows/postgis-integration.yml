@@ -1,0 +1,71 @@
+name: PostGIS integration
+
+"on":
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "app/**"
+      - "sql/**"
+      - "tests/test_postgis_integration.py"
+      - "requirements.txt"
+      - ".github/workflows/postgis-integration.yml"
+  push:
+    branches: [main, master]
+    paths:
+      - "app/**"
+      - "sql/**"
+      - "tests/test_postgis_integration.py"
+      - "requirements.txt"
+      - ".github/workflows/postgis-integration.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: postgis-integration-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  postgis:
+    runs-on: ubuntu-latest
+    services:
+      postgis:
+        image: postgis/postgis:16-3.4-alpine
+        env:
+          POSTGRES_DB: geoapi
+          POSTGRES_USER: geoapi
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U geoapi -d geoapi"
+          --health-interval 2s
+          --health-timeout 2s
+          --health-retries 20
+    env:
+      GEOAPI_TEST_DATABASE_URL: postgresql://geoapi@localhost:5432/geoapi
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install application and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -e . pytest
+      - name: Initialize disposable PostGIS database
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          import psycopg
+
+          schema = Path("sql/schema.sql").read_text(encoding="utf-8")
+          with psycopg.connect(os.environ["GEOAPI_TEST_DATABASE_URL"], autocommit=True) as conn:
+              conn.execute(schema, prepare=False)
+          PY
+      - name: Test API filters against PostGIS
+        run: python -m pytest -q tests/test_postgis_integration.py
