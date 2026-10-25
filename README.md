@@ -13,6 +13,8 @@
 <!-- markdownlint-enable MD033 -->
 <!-- ZQM-END -->
 
+An OGC API – Features reference implementation built with FastAPI and PostgreSQL/PostGIS. Explore GeoJSON endpoints, collections, bounding-box and datetime filters, pagination, and a synthetic sample backend; the documented test suite does not by itself establish full OGC conformance or production readiness.
+
 ## Repository role and status
 
 **Status:** Active, public.
