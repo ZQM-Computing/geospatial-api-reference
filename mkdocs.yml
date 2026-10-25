@@ -12,6 +12,7 @@ theme:
     - search.highlight
 
 markdown_extensions:
+  - meta
   - admonition
   - codehilite
   - toc:
