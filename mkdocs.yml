@@ -1,5 +1,5 @@
 site_name: Geospatial API Reference
-site_description: OGC API - Features reference implementation
+site_description: OGC API – Features reference using FastAPI and PostGIS, with GeoJSON collections, bbox and datetime filters, pagination, and a synthetic sample backend.
 site_author: ZQM Computing
 repo_url: https://github.com/ZQM-Computing/geospatial-api-reference
 
