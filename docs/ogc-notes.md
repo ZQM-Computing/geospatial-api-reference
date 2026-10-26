@@ -26,3 +26,8 @@ This service implements the essentials of **OGC API – Features Part 1: Core** 
 - Add `ETag`/`Cache-Control` on items responses — feature data is cache-friendly and CDNs do the heavy lifting.
 - Keep the collection registry data-driven: in a real deployment, generate it from the database catalog rather than a code constant.
 - Log slow queries with their `bbox`/`limit` parameters; spatial APIs fail in interesting ways at the extremes (world-size bboxes, million-row pages).
+
+
+## Datetime filtering and collections without a temporal property
+
+The `datetime` query parameter is parsed as a timezone-aware instant or interval and normalized to UTC before backend filtering. Collections that do not declare a temporal property (for example, the synthetic `parcels` collection) return an empty FeatureCollection when a valid datetime filter is supplied; the sample and PostGIS backends must behave consistently. This behavior is an implementation contract, not a claim of full OGC API conformance.
