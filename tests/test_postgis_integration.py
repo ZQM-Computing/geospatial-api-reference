@@ -46,6 +46,16 @@ def test_postgis_bbox_and_datetime_filters(client: TestClient) -> None:
     }
 
 
+def test_postgis_datetime_filter_on_collection_without_temporal_property_returns_no_items(client: TestClient) -> None:
+    response = client.get(
+        "/collections/parcels/items",
+        params={"datetime": "2026-01-01T00:00:00Z/2026-12-31T23:59:59Z"},
+    )
+    assert response.status_code == 200
+    assert response.json()["numberMatched"] == 0
+    assert response.json()["features"] == []
+
+
 def test_postgis_antimeridian_bbox_queries_both_edges(client: TestClient) -> None:
     assert DATABASE_URL is not None
     test_ids = ("integration-east", "integration-west")
