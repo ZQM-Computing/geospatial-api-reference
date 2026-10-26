@@ -205,6 +205,16 @@ def test_datetime_offsets_compare_as_instants(client: TestClient) -> None:
     assert {feature["id"] for feature in response.json()["features"]} == {"site-1", "site-2"}
 
 
+def test_datetime_filter_on_collection_without_temporal_property_returns_no_items(client: TestClient) -> None:
+    response = client.get(
+        "/collections/parcels/items",
+        params={"datetime": "2026-01-01T00:00:00Z/2026-12-31T23:59:59Z"},
+    )
+    assert response.status_code == 200
+    assert response.json()["numberMatched"] == 0
+    assert response.json()["features"] == []
+
+
 def test_datetime_requires_timezone(client: TestClient) -> None:
     response = client.get(
         "/collections/service-sites/items",
