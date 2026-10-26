@@ -1,5 +1,7 @@
 """API tests against the sample backend -- no database required."""
 
+from urllib.parse import parse_qs, urlsplit
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -78,6 +80,34 @@ def test_items_limit_and_offset(client: TestClient) -> None:
     assert page2["numberReturned"] == 1
     ids = {f["id"] for f in page1["features"]} | {f["id"] for f in page2["features"]}
     assert ids == {"parcel-1", "parcel-2", "parcel-3"}
+
+
+
+def test_items_pagination_links_preserve_filters_and_effective_limit(client: TestClient) -> None:
+    response = client.get(
+        "/collections/service-sites/items",
+        params={"limit": 2, "offset": 0, "bbox": "-81.2,29,-80.7,29.4"},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    links = {link["rel"]: link for link in body["links"]}
+    self_query = parse_qs(urlsplit(links["self"]["href"]).query)
+    assert self_query == {
+        "limit": ["2"],
+        "offset": ["0"],
+        "bbox": ["-81.2,29,-80.7,29.4"],
+    }
+    assert "next" in links
+    assert links["next"]["type"] == "application/geo+json"
+    assert "limit=2" in links["next"]["href"]
+    assert "offset=2" in links["next"]["href"]
+    assert "bbox=" in links["next"]["href"]
+
+    next_response = client.get(links["next"]["href"])
+    assert next_response.status_code == 200
+    next_links = {link["rel"]: link for link in next_response.json()["links"]}
+    assert "prev" in next_links
+    assert "offset=0" in next_links["prev"]["href"]
 
 
 def test_single_item(client: TestClient) -> None:

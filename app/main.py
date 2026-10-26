@@ -17,6 +17,7 @@ Run locally (sample data, no database):
 from __future__ import annotations
 
 from math import isfinite
+from urllib.parse import urlencode
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query, Request
@@ -200,14 +201,42 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             limit=page_limit,
             offset=offset,
         )
+        # OGC API - Features pagination links must preserve the active filters
+        # and point at the effective (capped) page size, not an oversized request.
+        def page_link(rel: str, page_offset: int, title: str) -> dict[str, str]:
+            params = {"limit": str(page_limit), "offset": str(page_offset)}
+            if bbox is not None:
+                params["bbox"] = bbox
+            if datetime is not None:
+                params["datetime"] = datetime
+            query = urlencode(params)
+            return {
+                "rel": rel,
+                "type": "application/geo+json",
+                "title": title,
+                "href": str(request.base_url).rstrip("/")
+                + f"/collections/{collection_id}/items?{query}",
+            }
+
+        links = [
+            {
+                "rel": "self",
+                "type": "application/geo+json",
+                "title": "Items",
+                "href": str(request.url),
+            }
+        ]
+        if offset > 0:
+            links.append(page_link("prev", max(0, offset - page_limit), "Previous page"))
+        if features and offset + len(features) < total:
+            links.append(page_link("next", offset + len(features), "Next page"))
+
         return {
             "type": "FeatureCollection",
             "features": features,
             "numberMatched": total,
             "numberReturned": len(features),
-            "links": [
-                _link(request, "self", f"/collections/{collection_id}/items", "Items")
-            ],
+            "links": links,
         }
 
     @app.get("/collections/{collection_id}/items/{feature_id}")
