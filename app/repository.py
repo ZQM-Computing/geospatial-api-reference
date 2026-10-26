@@ -323,14 +323,19 @@ class PostGISRepository:
                 )
                 params.extend([*bbox, *bbox])
         dt_prop = COLLECTIONS[collection_id]["datetime_property"]
-        if datetime_range is not None and dt_prop is not None:
-            start, end = datetime_range
-            if start is not None:
-                where.append(f"((to_jsonb(t) ->> '{dt_prop}')::timestamptz) >= %s::timestamptz")
-                params.append(start)
-            if end is not None:
-                where.append(f"((to_jsonb(t) ->> '{dt_prop}')::timestamptz) <= %s::timestamptz")
-                params.append(end)
+        if datetime_range is not None:
+            if dt_prop is None:
+                # Match the sample backend: a temporal filter cannot match a
+                # collection with no declared temporal property.
+                where.append("FALSE")
+            else:
+                start, end = datetime_range
+                if start is not None:
+                    where.append(f"((to_jsonb(t) ->> '{dt_prop}')::timestamptz) >= %s::timestamptz")
+                    params.append(start)
+                if end is not None:
+                    where.append(f"((to_jsonb(t) ->> '{dt_prop}')::timestamptz) <= %s::timestamptz")
+                    params.append(end)
         where_sql = f"WHERE {' AND '.join(where)}" if where else ""
 
         total = conn.execute(
