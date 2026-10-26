@@ -69,7 +69,8 @@ jobs:
           if find . -path './.git' -prune -o -type f \( -name 'test_*.py' -o -name '*_test.py' \) -print -quit | grep -q .; then
             python -m pytest -q
           else
-            echo "No pytest-discoverable test files; dependency installation completed."
+            echo "::error::No pytest-discoverable test files found; refusing a false-green CI run." >&2
+            exit 1
           fi
 
   node:
