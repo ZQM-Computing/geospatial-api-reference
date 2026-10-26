@@ -80,6 +80,31 @@ def test_items_limit_and_offset(client: TestClient) -> None:
     assert ids == {"parcel-1", "parcel-2", "parcel-3"}
 
 
+
+def test_items_pagination_links_preserve_filters_and_effective_limit(client: TestClient) -> None:
+    response = client.get(
+        "/collections/service-sites/items",
+        params={"limit": 2, "offset": 0, "bbox": "-81.2,29,-80.7,29.4"},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    links = {link["rel"]: link for link in body["links"]}
+    assert links["self"]["href"].endswith(
+        "/collections/service-sites/items?limit=2&offset=0&bbox=-81.2%2C29%2C-80.7%2C29.4"
+    )
+    assert "next" in links
+    assert links["next"]["type"] == "application/geo+json"
+    assert "limit=2" in links["next"]["href"]
+    assert "offset=2" in links["next"]["href"]
+    assert "bbox=" in links["next"]["href"]
+
+    next_response = client.get(links["next"]["href"])
+    assert next_response.status_code == 200
+    next_links = {link["rel"]: link for link in next_response.json()["links"]}
+    assert "prev" in next_links
+    assert "offset=0" in next_links["prev"]["href"]
+
+
 def test_single_item(client: TestClient) -> None:
     response = client.get("/collections/parcels/items/parcel-2")
     assert response.status_code == 200
