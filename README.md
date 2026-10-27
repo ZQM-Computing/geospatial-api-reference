@@ -166,6 +166,10 @@ Maintained by [ZQM Computing](https://github.com/ZQM-Computing). Built from prod
 - [proxmox-ceph-operations](https://github.com/ZQM-Computing/proxmox-ceph-operations) — Proxmox VE + Ceph operations runbooks: health checks, backup discipline, OSD replacement, upgrade checklists
 - [geospatial-cookbooks](https://github.com/ZQM-Computing/geospatial-cookbooks) — Umbrella index for ZQM Computing geospatial cookbooks
 
+## Security boundaries
+
+This reference API does not currently implement authentication or authorization. It is intended for local learning and synthetic data, not direct public exposure. Review [Public API Security Boundaries](docs/SECURITY-BOUNDARIES.md) before deploying or connecting sensitive data.
+
 ## Documentation and validation
 
 For setup instructions, reproducible examples, data provenance, CRS/SRID assumptions, security guidance, and dependency labels, follow the [ZQM geospatial repository documentation standard](https://github.com/ZQM-Computing/geospatial-cookbooks/blob/main/docs/repository-documentation-standard.md).
