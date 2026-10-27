@@ -106,7 +106,7 @@ More on how the endpoints map to the standard — and what's deliberately out of
 Environment variables (prefix `GEOAPI_`):
 
 | Variable | Default | Meaning |
-| --- | --- |---|
+| --- | --- | --- |
 | `GEOAPI_DATA_BACKEND` | `sample` | `sample` or `postgis` |
 | `GEOAPI_DATABASE_URL` | local demo URL | PostgreSQL connection string (PostGIS mode) |
 | `GEOAPI_DEFAULT_LIMIT` | `50` | Default page size for items queries |
