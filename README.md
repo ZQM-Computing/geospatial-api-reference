@@ -75,7 +75,7 @@ the fastest way to explore the available operations.
 ## Endpoints
 
 | Endpoint | Description |
-|---|---|
+| --- | --- |
 | `GET /` | Landing page with links (OGC Core) |
 | `GET /conformance` | Conformance classes this service declares |
 | `GET /collections` | All collections with spatial extents |
@@ -106,7 +106,7 @@ More on how the endpoints map to the standard — and what's deliberately out of
 Environment variables (prefix `GEOAPI_`):
 
 | Variable | Default | Meaning |
-|---|---|---|
+| --- | --- |---|
 | `GEOAPI_DATA_BACKEND` | `sample` | `sample` or `postgis` |
 | `GEOAPI_DATABASE_URL` | local demo URL | PostgreSQL connection string (PostGIS mode) |
 | `GEOAPI_DEFAULT_LIMIT` | `50` | Default page size for items queries |
