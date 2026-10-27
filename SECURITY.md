@@ -1,4 +1,4 @@
-## Security Policy
+# Security Policy
 
 ### Reporting a Vulnerability
 
@@ -17,6 +17,7 @@ If you discover a security vulnerability in this project, please report it respo
 ### Scope
 
 This is a reference/cookbook repository. Security reports should focus on:
+
 - Vulnerable dependencies
 - Hardcoded secrets in example code
 - Insecure patterns demonstrated in examples
