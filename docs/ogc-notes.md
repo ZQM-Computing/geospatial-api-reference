@@ -3,7 +3,7 @@
 This service implements the essentials of **OGC API – Features Part 1: Core** — the successor pattern to WFS — in plain FastAPI.
 
 | Standard concept | Here |
-|---|---|
+| --- | --- |
 | Landing page | `GET /` with `self`, `conformance`, and `data` links |
 | Conformance declaration | `GET /conformance` listing the Core, OpenAPI 3.0, and GeoJSON classes |
 | Collections | `GET /collections`, `GET /collections/{id}` with spatial extent |
