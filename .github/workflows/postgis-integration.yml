@@ -28,7 +28,7 @@ concurrency:
 
 jobs:
   postgis:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, zqm-linux]
     services:
       postgis:
         image: postgis/postgis:16-3.4-alpine
