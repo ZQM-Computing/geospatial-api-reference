@@ -29,6 +29,7 @@ concurrency:
 jobs:
   postgis:
     runs-on: [self-hosted, Linux, X64, zqm-linux]
+    timeout-minutes: 30
     services:
       postgis:
         image: postgis/postgis:16-3.4-alpine
